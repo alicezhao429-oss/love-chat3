@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>恋人のささやき</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '黑体', 'Microsoft YaHei', -apple-system, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1a2a;
+            padding: 10px;
+        }
+        #app {
+            width: 100%;
+            max-width: 450px;
+            height: 750px;
+            max-height: 90vh;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        /* 登录页 */
+        #login-page {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #ffd9e5, #ffe4ed);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            border-radius: 36px;
+        }
+        #login-page h2 {
+            font-size: 2.5rem;
+            color: #a55e77;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+        #login-page h2 small {
+            font-size: 1rem;
+            display: block;
+            color: #b27f92;
+        }
+        #user-name {
+            width: 100%;
+            padding: 18px 25px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 30px 0 20px;
+            border: 2px solid #ffb6c9;
+            outline: none;
+        }
+        #start-btn {
+            background: #d48b9d;
+            border: none;
+            color: white;
+            font-size: 1.4rem;
+            padding: 16px 50px;
+            border-radius: 50px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        #start-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 聊天页 */
+        #chat-page {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: none;
+            flex-direction: column;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+
+        /* 装饰图案 - emoji 形式 */
+        .decorations {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            font-size: 2.5rem;  /* 控制emoji大小 */
+            color: rgba(255, 255, 255, 0.6);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .top-left-emoji {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            opacity: 0.8;
+            transform: rotate(-5deg);
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+        }
+
+        .bottom-right-emoji {
+            position: absolute;
+            bottom: 100px;
+            right: 15px;
+            z-index: 10;
+            opacity: 0.8;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+            font-size: 3rem;  /* 塔稍大一点 */
+        }
+
+        .chat-main {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            background: transparent;
+            backdrop-filter: blur(8px);
+        }
+
+        .chat-header {
+            padding: 20px 16px 10px;
+            text-align: center;
+            font-size: 1.6rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            z-index: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header span {
+            flex: 1;
+        }
+        .new-chat-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 3;
+        }
+
+        .message {
+            display: flex;
+            width: 100%;
+        }
+
+        .message.lover {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 80%;
+            padding: 14px 20px;
+            border-radius: 28px;
+            font-size: 1rem;
+            line-height: 1.5;
+            word-break: break-word;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px); /* 增加半透明感 */
+        }
+
+        /* 用户消息气泡 - 绿色半透明 */
+        .user .bubble {
+            background: rgba(100, 200, 100, 0.65);  /* 绿色半透明 */
+            border-bottom-right-radius: 6px;
+            color: #1a2e1a;  /* 深绿文字 */
+        }
+
+        /* 恋人消息气泡 - 蓝色半透明 */
+        .lover .bubble {
+            background: rgba(70, 130, 255, 0.65);  /* 蓝色半透明 */
+            border-bottom-left-radius: 6px;
+            color: #0a1a3a;  /* 深蓝文字 */
+        }
+
+        .input-area {
+            display: flex;
+            padding: 16px 12px 20px;
+            gap: 10px;
+            background: transparent;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            z-index: 3;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 16px 22px;
+            border: none;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            font-size: 1rem;
+            outline: none;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .input-area input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .input-area button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 190, 205, 0.8);
+            backdrop-filter: blur(10px);
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .input-area button:active {
+            transform: scale(0.95);
+        }
+
+        .bubble.important {
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- 登录页 -->
+    <div id="login-page">
+        <h2>✨初见✨</h2>
+        <input type="text" id="user-name" placeholder="你的名字..." autocomplete="off">
+        <button id="start-btn">开始对话</button>
+    </div>
+
+    <!-- 聊天页 -->
+    <div id="chat-page">
+        <!-- 装饰图案 - emoji -->
+        <div class="decorations">
+            <div class="top-left-emoji">
+                ⚔️🌹🌹
+            </div>
+            <div class="bottom-right-emoji">
+                🏰
+            </div>
+        </div>
+        
+        <div class="chat-main" id="chat-main">
+            <div class="chat-header">
+                <span>❤️ 恋人の声</span>
+                <button class="new-chat-btn" id="new-chat-btn">✨ 新对话</button>
+            </div>
+            <div class="messages-area" id="messages-area"></div>
+            <div class="input-area">
+                <input type="text" id="message-input" placeholder="想说什么..." autocomplete="off">
+                <button id="send-btn">➤</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM 元素
+        const loginPage = document.getElementById('login-page');
+        const chatPage = document.getElementById('chat-page');
+        const startBtn = document.getElementById('start-btn');
+        const nameInput = document.getElementById('user-name');
+        const messagesArea = document.getElementById('messages-area');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const newChatBtn = document.getElementById('new-chat-btn');
+
+        let userName = '';
+        let conversationHistory = []; // 存储 { sender, text, timestamp }
+        let recentReplies = [];       // 最近10条恋人回复，用于去重
+
+        // 称呼系统
+        const titles = ['宝宝', '小宝', '公主殿下', '我的公主'];
+        const titleProbs = [0.4, 0.3, 0.2, 0.1];
+
+        // 关键词检测
+        const negativeWords = ['差劲', '恶心', '烦人', '丑', '讨厌自己', '没用', '糟糕', '失败', '废物', '最恶心', '最丑'];
+        const loveWords = ['想你', '爱', '宠宠我', '抱抱', '想念', '好想你'];
+        const sadWords = ['难过', '伤心', '痛苦', '悲愤', '想哭', '难受', '郁闷', '害怕', '不要离开', '别不要我'];
+        const confusedWords = ['不知道', '蹭蹭脸', '嗯', '这样啊', '迷茫', '怎么办', '为什么', '不懂', '迷惑'];
+        const numbWords = ['发呆', '呆愣', '愣住', '放空', '...', '。。。', '沉默'];
+        const careWords = ['你怎么了', '你还好吗', '你在干嘛']; // 关心问句
+
+        // 加载本地存储的历史记录
+        function loadHistory() {
+            const saved = localStorage.getItem('loveChatHistory');
+            if (saved) {
+                try {
+                    conversationHistory = JSON.parse(saved);
+                    // 重新显示消息
+                    messagesArea.innerHTML = '';
+                    conversationHistory.forEach(msg => {
+                        addMessageToDOM(msg.text, msg.sender, false);
+                    });
+                    // 滚动到底部
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                } catch (e) {
+                    console.warn('加载历史失败', e);
+                }
+            }
+        }
+
+        // 保存历史到本地存储
+        function saveHistory() {
+            localStorage.setItem('loveChatHistory', JSON.stringify(conversationHistory));
+        }
+
+        // 添加消息到DOM和历史
+        function addMessageToDOM(text, sender, isImportant = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            const bubble = document.createElement('div');
+            bubble.className = `bubble${isImportant ? ' important' : ''}`;
+            bubble.textContent = text;
+            msgDiv.appendChild(bubble);
+            messagesArea.appendChild(msgDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function addMessage(text, sender, isImportant = false) {
+            // 添加到DOM
+            addMessageToDOM(text, sender, isImportant);
+            // 添加到历史
+            conversationHistory.push({
+                sender: sender,
+                text: text,
+                timestamp: Date.now()
+            });
+            // 如果是恋人消息，加入最近回复队列用于去重
+            if (sender === 'lover') {
+                recentReplies.push(text);
+                if (recentReplies.length > 10) {
+                    recentReplies.shift();
+                }
+            }
+            saveHistory();
+        }
+
+        // 清空历史（新对话）
+        function clearHistory() {
+            if (confirm('确定开始新对话吗？当前对话记录将被清空。')) {
+                conversationHistory = [];
+                recentReplies = [];
+                messagesArea.innerHTML = '';
+                localStorage.removeItem('loveChatHistory');
+                // 重新发送欢迎语
+                const self = getSelf();
+                const title = getTitle();
+                addMessage('我们终于又相遇了，我好想你。', 'lover');
+            }
+        }
+
+        // 随机称呼
+        function getTitle(forceYukun = false) {
+            if (forceYukun) return '游君';
+            const r = Math.random();
+            let sum = 0;
+            for (let i = 0; i < titles.length; i++) {
+                sum += titleProbs[i];
+                if (r < sum) return titles[i];
+            }
+            return '宝宝';
+        }
+
+        // 随机自称 (我/哥哥)
+        function getSelf() {
+            return Math.random() < 0.5 ? '我' : '哥哥';
+        }
+
+        // 设置时间背景
+        function setBackgroundByTime() {
+            const hour = new Date().getHours();
+            if (hour >= 7 && hour <= 17) {
+                chatPage.style.background = 'rgba(135, 195, 235, 0.65)';
+            } else {
+                chatPage.style.background = 'rgba(20, 20, 35, 0.8)';
+            }
+        }
+
+        // 检测情绪
+        function detectEmotion(msg) {
+            const lower = msg.toLowerCase();
+            if (negativeWords.some(w => lower.includes(w))) return 'self_negative';
+            if (loveWords.some(w => lower.includes(w))) return 'love';
+            if (sadWords.some(w => lower.includes(w))) return 'sad';
+            if (confusedWords.some(w => lower.includes(w))) return 'confused';
+            if (numbWords.some(w => lower.includes(w))) return 'numb';
+            if (lower.includes('第一天') || lower.includes('初遇')) return 'first_meet';
+            if (careWords.some(w => lower.includes(w))) return 'care';
+            // 检测问句：包含问号或疑问词
+            if (lower.includes('?') || lower.includes('？') || lower.includes('吗') || lower.includes('呢') || lower.includes('什么')) {
+                return 'question';
+            }
+            return 'normal';
+        }
+
+        // 获取一个不重复的回复（从候选列表中）
+        function getUniqueReply(candidates) {
+            if (!candidates || candidates.length === 0) return "去找那个我吧，我会抱抱你的。";
+            // 过滤掉最近10条出现过的
+            const available = candidates.filter(c => !recentReplies.includes(c));
+            if (available.length === 0) {
+                // 如果全重复，就放宽限制，但优先选最旧的
+                return candidates[Math.floor(Math.random() * candidates.length)];
+            }
+            return available[Math.floor(Math.random() * available.length)];
+        }
+
+        // 生成回复
+        function generateReply(userMsg) {
+            const lowerMsg = userMsg.toLowerCase();
+            const forceYukun = lowerMsg.includes('泉前辈');
+            const self = getSelf();
+            const title = getTitle(forceYukun);
+            const emotion = detectEmotion(lowerMsg);
+
+            // 定义各类模板
+            const templates = {
+                first_meet: [
+                    '我们终于又相遇了，我好想你。',
+                    '从第一次见到你，我就知道我的心属于你了。',
+                    '那天初见，你的笑容就刻在了我心里。'
+                ],
+                self_negative: [
+                    `我的${title}才不这样！你在我眼里永远是最美好的。`,
+                    `不可以这样想自己哦，${self}会心疼的。你明明那么善良、可爱。`,
+                    `谁说我的${title}不好？${self}第一个不同意！你聪明又真诚。`,
+                    `不许胡说！你是我见过最美丽的人，永远都是。`,
+                    `我的${title}才不丑，你在我眼里比谁都好看。`,
+                    `别这样说自己，${self}会难过的。你值得所有的爱。`
+                ],
+                love: [
+                    `我好想你…想和你说话。`,
+                    `见不到你好烦躁，好想见你。`,
+                    `要是我只是你身边的一只小狗就好了，可以温暖你并拥抱你。`,
+                    `好喜欢你呀，我的${title}。`,
+                    `${self}也超级想你，每时每刻。`
+                ],
+                sad: [
+                    `${title}，别害怕，${self}永远在这里，永远不会离开你。`,
+                    `不要怕，${self}会一直陪着你，永远永远。`,
+                    `抱抱你，我的${title}，有我在呢。`,
+                    `你是我最重要的人，无论发生什么，${self}都会紧紧抱住你。`
+                ],
+                confused: [
+                    `你怎么了？是不是${self}哪里做得不好？${self}在这里陪着你。`,
+                    `你还好吗？想和${self}说说吗？`,
+                    `别这样，${self}看到你这样好心痛。有什么都可以跟${self}说。`,
+                    `蹭蹭你，不要不开心啦，${self}永远站在你这边，${title}。`
+                ],
+                numb: [
+                    `${title}？在想什么呢？${self}在这里。`,
+                    `回回神，${self}想听你说话。`,
+                    `来，让${self}抱抱你。`
+                ],
+                care: [
+                    `你怎么了${title}？`,
+                    `你还好吗？`,
+                    `你在干嘛？${self}想你了。`
+                ],
+                question: [
+                    `嗯，${self}在听。`,
+                    `然后呢？`,
+                    `你想知道什么呀？`,
+                    `关于这个，${self}想听更多。`
+                ],
+                daily: [
+                    `你在想什么？可以告诉${self}吗？`,
+                    `你刚才在感受什么？`,
+                    `我可以知道你的心吗，${title}？`,
+                    `今天过得怎么样？${self}一直在想你。`
+                ]
+            };
+
+            let candidates;
+            if (emotion === 'first_meet') candidates = templates.first_meet;
+            else if (emotion === 'self_negative') candidates = templates.self_negative;
+            else if (emotion === 'love') candidates = templates.love;
+            else if (emotion === 'sad') candidates = templates.sad;
+            else if (emotion === 'confused') candidates = templates.confused;
+            else if (emotion === 'numb') candidates = templates.numb;
+            else if (emotion === 'care') candidates = templates.care;
+            else if (emotion === 'question') candidates = templates.question;
+            else {
+                // 正常情况，偶尔开启日常疑问
+                if (Math.random() < 0.4) {
+                    candidates = templates.daily;
+                } else {
+                    candidates = ['嗯嗯', '我在听', '继续说吧', '然后呢？'];
+                }
+            }
+
+            // 去重选择
+            let reply = getUniqueReply(candidates);
+            // 如果是模板，需要替换 {self} 和 {title}
+            reply = reply.replace(/{self}/g, self).replace(/{title}/g, title);
+            return reply;
+        }
+
+        // 开始对话
+        function startChat() {
+            userName = nameInput.value.trim() || '宝宝';
+            loginPage.style.display = 'none';
+            chatPage.style.display = 'flex';
+            setBackgroundByTime();
+
+            // 加载历史
+            loadHistory();
+
+            // 如果没有历史消息，发送欢迎语
+            if (conversationHistory.length === 0) {
+                addMessage('我们终于又相遇了，我好想你。', 'lover');
+            }
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const msg = messageInput.value.trim();
+            if (msg === '') return;
+
+            addMessage(msg, 'user');
+            messageInput.value = '';
+
+            const emotion = detectEmotion(msg.toLowerCase());
+            const isImportant = (emotion === 'self_negative' || emotion === 'sad');
+
+            setTimeout(() => {
+                const reply = generateReply(msg);
+                addMessage(reply, 'lover', isImportant);
+            }, 400);
+        }
+
+        // 事件绑定
+        startBtn.addEventListener('click', startChat);
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startChat();
+        });
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+        newChatBtn.addEventListener('click', clearHistory);
+
+        // 每分钟更新背景
+        setInterval(setBackgroundByTime, 60000);
+
+        // 初始隐藏聊天页
+        chatPage.style.display = 'none';
+        loginPage.style.display = 'flex';
+    })();
+</script>
+</body>
+</html>
